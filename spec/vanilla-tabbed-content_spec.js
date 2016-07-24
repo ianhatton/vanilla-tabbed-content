@@ -28,7 +28,7 @@ function createNav(className){
 }
 
 function createNavItemLink(navItem, i){
-  let a = document.createElement('a'); 
+  let a = document.createElement('a');
 
   a.setAttribute('role', 'tab');
 
@@ -70,7 +70,7 @@ function createTabs(bodyContainer, className, items = 2){
   _.forEach(range, (i)=>{
     tab = document.createElement('div');
 
-    tab.className = className + ' tab-' + (i - 1);
+    tab.className = className;
     tab.setAttribute('role', 'tabpanel');
     tab.innerHTML = '<p>Test</p>';
 
@@ -87,14 +87,14 @@ function removeElement(el){
 }
 
 describe('tabbed content module', function(){
-  let bodyContainer, tabbedContent, tabbedContentContainer, urlParser;
+  let bodyContainer, navContainer, tabbedContent, tabbedContentContainer, urlParser;
 
   beforeEach(()=>{
     tabbedContentContainer = createTabbedContent('tabbed-content');
-    this.navContainer = createNav('tabbed-content-nav');
+    navContainer = createNav('tabbed-content-nav');
     bodyContainer = createBodyContainer('tabbed-content-body');
 
-    tabbedContentContainer.appendChild(this.navContainer);
+    tabbedContentContainer.appendChild(navContainer);
     tabbedContentContainer.appendChild(bodyContainer);
 
     tabbedContent = new TabbedContentClass(
@@ -106,14 +106,20 @@ describe('tabbed content module', function(){
       }, false
     );
 
-    urlParser = TabbedContentClass.__get__('urlParser');
-
     tabbedContent.navItems = [];
     tabbedContent.tabs = [];
+
+    urlParser = TabbedContentClass.__get__('urlParser');
+
+    // For testing
+    this.navContainer = tabbedContent.config.element.querySelector('.' + tabbedContent.config.navContainerClass);
+    this.navItems = tabbedContent.config.element.querySelector('.' + tabbedContent.config.navContainerClass).getElementsByTagName('a');
+    this.tabs = tabbedContent.config.element.querySelectorAll('.' + tabbedContent.config.tabContainerClass);
   });
 
   afterEach(()=>{
     removeElement(document.querySelector('.' + tabbedContent.config.navContainerClass));
+    removeElement(document.querySelector('.' + tabbedContent.config.tabContainerClass));
   });
 
   it('should exist', function(){
@@ -148,7 +154,7 @@ describe('tabbed content module', function(){
     let navItem;
 
     beforeEach(()=>{
-      tabbedContent.navItems = this.navContainer.getElementsByTagName('a');
+      tabbedContent.navItems = this.navItems;
       navItem = tabbedContent.navItems[0];
 
       spyOn(tabbedContent, '_getNavItems');
@@ -228,7 +234,7 @@ describe('tabbed content module', function(){
     let clickSpy, navItem;
 
     beforeEach(()=>{
-      tabbedContent.navItems = this.navContainer.getElementsByTagName('a');
+      tabbedContent.navItems = this.navItems;
       navItem = tabbedContent.navItems[0];
 
       clickSpy = jasmine.createSpyObj('e', ['preventDefault']);
@@ -244,6 +250,222 @@ describe('tabbed content module', function(){
 
     it('should call the _setActiveTab function with navItem as a parameter', ()=>{
       expect(tabbedContent._setActiveTab).toHaveBeenCalledWith(navItem);
+    });
+  });
+
+  describe('_setActiveTab function', ()=>{
+    let activeIndex, navItem;
+
+    beforeEach(()=>{
+      tabbedContent.navItems = this.navItems;
+      navItem = tabbedContent.navItems[0];
+      activeIndex = _.indexOf(tabbedContent.navItems, navItem);
+
+      spyOn(tabbedContent, '_setNavItemAriaSelected');
+      spyOn(tabbedContent, '_setNavItemClass');
+      spyOn(tabbedContent, '_setTabAriaHidden');
+      spyOn(tabbedContent, '_setTabClass');
+
+      tabbedContent._setActiveTab(navItem);
+    });
+
+    it('should call the _setNavItemAriaSelected function with activeIndex as a parameter', ()=>{
+      expect(tabbedContent._setNavItemAriaSelected).toHaveBeenCalledWith(activeIndex);
+    });
+
+    it('should call the _setNavItemClass function with activeIndex as a parameter', ()=>{
+      expect(tabbedContent._setNavItemClass).toHaveBeenCalledWith(activeIndex);
+    });
+
+    it('should call the _setTabAriaHidden function with activeIndex as a parameter', ()=>{
+      expect(tabbedContent._setTabAriaHidden).toHaveBeenCalledWith(activeIndex);
+    });
+
+    it('should call the _setTabClass function with activeIndex as a parameter', ()=>{
+      expect(tabbedContent._setTabClass).toHaveBeenCalledWith(activeIndex);
+    });
+  });
+
+  describe('_setNavItemAriaControls function', ()=>{
+    let navItem;
+
+    beforeEach(()=>{
+      tabbedContent.navItems = this.navItems;
+      navItem = tabbedContent.navItems[0];
+
+      tabbedContent._setNavItemAriaControls();
+    });
+
+    it('should set the "aria-controls" attribute of the nav items to be "tab-[index]"', ()=>{
+      expect(navItem.getAttribute('aria-controls')).toEqual('tab-0');
+    });
+  });
+
+  describe('_setNavItemAriaSelected function', ()=>{
+    let activeIndex, navItemOne, navItemTwo;
+
+    beforeEach(()=>{
+      activeIndex = 0;
+      tabbedContent.navItems = this.navItems;
+      navItemOne = tabbedContent.navItems[0];
+      navItemTwo = tabbedContent.navItems[1];
+      navItemTwo.setAttribute('aria-selected', 'true');
+
+      tabbedContent._setNavItemAriaSelected(activeIndex);
+    });
+
+    it('should set the "aria-selected" attribute of all nav items to "false"', ()=>{
+      expect(navItemTwo.getAttribute('aria-selected')).toEqual('false');
+    });
+
+    it('should set the "aria-selected" attribute of the nav item which has the same array index as the activeIndex parameter to "true"', ()=>{
+      expect(navItemOne.getAttribute('aria-selected')).toEqual('true');
+    });
+  });
+
+  describe('_setNavItemClass function', ()=>{
+    let activeIndex, navItemOne, navItemTwo;
+
+    beforeEach(()=>{
+      activeIndex = 0;
+      tabbedContent.navItems = this.navItems;
+      navItemOne = tabbedContent.navItems[0];
+      navItemTwo = tabbedContent.navItems[1];
+      navItemTwo.className = 'active';
+
+      tabbedContent._setNavItemClass(activeIndex);
+    });
+
+    it('should remove the "active" class from all nav items', ()=>{
+      expect(navItemTwo.className).not.toContain('active');
+    });
+
+    it('should add the "active" class to the nav item with the same array index as the activeIndex parameter', ()=>{
+      expect(navItemOne.className).toContain('active');
+    });
+  });
+
+  describe('_setTabAriaHidden function', ()=>{
+    let activeIndex, tabOne, tabTwo;
+
+    beforeEach(()=>{
+      activeIndex = 0;
+      tabbedContent.tabs = this.tabs;
+      tabOne = tabbedContent.tabs[0];
+      tabTwo = tabbedContent.tabs[1];
+      tabTwo.setAttribute('aria-hidden', 'false');
+
+      tabbedContent._setTabAriaHidden(activeIndex);
+    });
+
+    it('should set the "aria-hidden" attribute of all nav items to "true"', ()=>{
+      expect(tabTwo.getAttribute('aria-hidden')).toEqual('true');
+    });
+
+    it('should set the "aria-hidden" attribute of the tab with the same array index as the activeIndex parameter to "false"', ()=>{
+      expect(tabOne.getAttribute('aria-hidden')).toEqual('false');
+    });
+  });
+
+  describe('_setTabClass function', ()=>{
+    let activeIndex, tabOne, tabTwo;
+
+    beforeEach(()=>{
+      activeIndex = 0;
+      tabbedContent.tabs = this.tabs;
+      tabOne = tabbedContent.tabs[0];
+      tabTwo = tabbedContent.tabs[1];
+      tabTwo.className = 'active';
+
+      tabbedContent._setTabClass(activeIndex);
+    });
+
+    it('should remove the "active" class from all tabs', ()=>{
+      expect(tabTwo.className).not.toContain('active');
+    });
+
+    it('should add the "active" class to the tab with the same array index as the activeIndex parameter', ()=>{
+      expect(tabOne.className).toContain('active');
+    });
+  });
+
+  describe('_setTabClasses function', ()=>{
+    let tab;
+
+    beforeEach(()=>{
+      tabbedContent.tabs = this.tabs;
+      tab = tabbedContent.tabs[0];
+
+      tabbedContent._setTabClasses();
+    });
+
+    it('should add the "tab-[index]" class to the tabs', ()=>{
+      expect(tab.className).toContain('tab-0');
+    });
+  });
+
+  describe('_simulateNavItemClick function', ()=>{
+    let anchor, navItem;
+
+    beforeEach(()=>{
+      tabbedContent.navItems = this.navItems;
+      navItem = tabbedContent.navItems[0];
+
+      spyOn(tabbedContent, '_setActiveTab');
+    });
+
+    describe('when there is an anchor', ()=>{
+      beforeEach(()=>{
+        anchor = '#anchor';
+      });
+
+      describe('and the anchor matches the href of a nav item', ()=>{
+        beforeEach(()=>{
+          navItem.setAttribute('href', '#anchor');
+
+          tabbedContent._simulateNavItemClick(anchor);
+        });
+
+        it('should call the _setActiveTab function with navItem as a parameter', ()=>{
+          expect(tabbedContent._setActiveTab).toHaveBeenCalledWith(navItem);
+        });
+
+        it('should set window.location.hash to be the value of the anchor', ()=>{
+          expect(window.location.hash).toEqual(anchor);
+        });
+      });
+
+      describe('and the anchor does not match the href of a nav item', ()=>{
+        beforeEach(()=>{
+          window.location.hash = ' ';
+
+          navItem.setAttribute('href', '#something-else');
+
+          tabbedContent._simulateNavItemClick(anchor);
+        });
+
+        it('should not call the _setActiveTab function', ()=>{
+          expect(tabbedContent._setActiveTab).not.toHaveBeenCalled();
+        });
+
+        it('should not set window.location.hash to be the value of the anchor', ()=>{
+          expect(window.location.hash).not.toEqual(anchor);
+        });
+      });
+    });
+
+    describe('when there is no anchor', ()=>{
+      beforeEach(()=>{
+        tabbedContent._simulateNavItemClick(anchor);
+      });
+
+      it('should not call the _setActiveTab function', ()=>{
+        expect(tabbedContent._setActiveTab).not.toHaveBeenCalled();
+      });
+
+      it('should not set window.location.hash to be the value of the anchor', ()=>{
+        expect(window.location.hash).not.toEqual(anchor);
+      });
     });
   });
 });
