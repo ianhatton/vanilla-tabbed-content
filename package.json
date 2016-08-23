@@ -1,6 +1,6 @@
 {
   "name": "@ianhatton/vanilla-tabbed-content",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "Ian Hatton",
   "description": "Tabbed content module written in vanilla JavaScript",
   "keywords": [
