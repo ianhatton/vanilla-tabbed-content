@@ -55,7 +55,7 @@ class TabbedContentClass{
     this.tabs = this.config.element.querySelectorAll('.' + this.config.tabContainerClass);
     /* eslint-enable */
 
-    this._setTabClasses();
+    this._setTabIds();
   }
 
   _navItemClick(navItem, e){
@@ -74,8 +74,16 @@ class TabbedContentClass{
   }
 
   _setNavItemAriaControls(){
+    let href;
+
     _.forEach(this.navItems, function(navItem, i){
-      navItem.setAttribute('aria-controls', 'tab-' + i);
+      href = navItem.getAttribute('href');
+
+      if (href === '#'){
+        navItem.setAttribute('aria-controls', 'tab-' + i);
+      } else {
+        navItem.setAttribute('aria-controls', href.substring(1));
+      }
     });
   }
 
@@ -115,10 +123,17 @@ class TabbedContentClass{
     this.tabs[activeIndex].className += ' active';
   }
 
-  _setTabClasses(){
+  _setTabIds(){
+    let href;
+
     _.forEach(this.tabs, function(tabContentItem, i){
-      tabContentItem.className += ' tab-' + i;
-    });
+      href = this.navItems[i].getAttribute('href');
+
+      if (href === '#'){
+        let ariaControls = this.navItems[i].getAttribute('aria-controls');
+        tabContentItem.id = ariaControls;
+      }
+    }.bind(this));
   }
 
   _simulateNavItemClick(anchor){

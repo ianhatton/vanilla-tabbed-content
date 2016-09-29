@@ -32,7 +32,12 @@ function createNavItemLink(navItem, i){
 
   a.setAttribute('role', 'tab');
 
-  a.setAttribute('href', 'tab-' + (i - 1));
+  if (i % 2 === 0){
+    a.setAttribute('href', 'tab-' + (i - 1));
+
+  } else {
+    a.setAttribute('href', '#');
+  }
 
   navItem.appendChild(a);
 }
@@ -216,7 +221,7 @@ describe('tabbed content module', function(){
 
   describe('_getTabs function', ()=>{
     beforeEach(()=>{
-      spyOn(tabbedContent, '_setTabClasses');
+      spyOn(tabbedContent, '_setTabIds');
 
       tabbedContent._getTabs();
     });
@@ -225,8 +230,8 @@ describe('tabbed content module', function(){
       expect(tabbedContent.tabs.length).toBe(2);
     });
 
-    it('should call the _setTabClasses function', ()=>{
-      expect(tabbedContent._setTabClasses).toHaveBeenCalled();
+    it('should call the _setTabIds function', ()=>{
+      expect(tabbedContent._setTabIds).toHaveBeenCalled();
     });
   });
 
@@ -291,13 +296,30 @@ describe('tabbed content module', function(){
 
     beforeEach(()=>{
       tabbedContent.navItems = this.navItems;
-      navItem = tabbedContent.navItems[0];
-
-      tabbedContent._setNavItemAriaControls();
     });
 
-    it('should set the "aria-controls" attribute of the nav items to be "tab-[index]"', ()=>{
-      expect(navItem.getAttribute('aria-controls')).toEqual('tab-0');
+    describe("when the nav item's href attribute is '#'", ()=>{
+      beforeEach(()=>{
+        navItem = tabbedContent.navItems[0];
+
+        tabbedContent._setNavItemAriaControls();
+      });
+
+      it('should set the "aria-controls" attribute of the nav item to be "tab-[index]"', ()=>{
+        expect(navItem.getAttribute('aria-controls')).toEqual('tab-0');
+      });
+    });
+
+    describe("when the nav item's href attribute is something other than '#'", ()=>{
+      beforeEach(()=>{
+        navItem = tabbedContent.navItems[1];
+
+        tabbedContent._setNavItemAriaControls();
+      });
+
+      it('should set the "aria-controls" attribute of the nav item to be the value of the href without the hash"', ()=>{
+        expect(navItem.getAttribute('aria-controls')).toEqual('ab-1');
+      });
     });
   });
 
@@ -389,18 +411,40 @@ describe('tabbed content module', function(){
     });
   });
 
-  describe('_setTabClasses function', ()=>{
-    let tab;
+  describe('_setTabIds function', ()=>{
+    let navItem, tab;
 
     beforeEach(()=>{
+      tabbedContent.navItems = this.navItems;
       tabbedContent.tabs = this.tabs;
-      tab = tabbedContent.tabs[0];
-
-      tabbedContent._setTabClasses();
     });
 
-    it('should add the "tab-[index]" class to the tabs', ()=>{
-      expect(tab.className).toContain('tab-0');
+    describe("when the href attribute of the tab's corresponding nav item is '#'", ()=>{
+      beforeEach(()=>{
+        navItem = tabbedContent.navItems[0];
+        tab = tabbedContent.tabs[0];
+        navItem.setAttribute('aria-controls', 'testId');
+
+        tabbedContent._setTabIds();
+      });
+
+      it("should set the id of the tab to be the value of the nav item's 'aria-controls' attribute", ()=>{
+        expect(tab.id).toEqual('testId');
+      });
+    });
+
+    describe("when the href attribute of the tab's corresponding nav item is something other than '#'", ()=>{
+      beforeEach(()=>{
+        navItem = tabbedContent.navItems[1];
+        tab = tabbedContent.tabs[1];
+        navItem.setAttribute('aria-controls', 'testId');
+
+        tabbedContent._setTabIds();
+      });
+
+      it("should not set the id of the tab to be the value of the nav item's 'aria-controls' attribute", ()=>{
+        expect(tab.id).not.toEqual('testId');
+      });
     });
   });
 
