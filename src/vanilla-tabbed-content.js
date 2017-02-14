@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 const _ = require('lodash/core');
 _.includes = require('lodash/includes');
 
@@ -20,15 +21,14 @@ class TabbedContentClass{
   _init(){
     this.navItems = [];
     this.tabs = [];
-    /* eslint-disable max-len */
     this.navContainer = this.config.element.querySelector('.' + this.config.navContainerClass);
-    /* eslint-enable */
     this._render();
   }
 
   _render(){
-    let anchor = urlParser.getHash();
+    const anchor = urlParser.getHash();
 
+    this._setTabbedContentId();
     this._getNavItems();
     this._getTabs();
     this._setActiveTab(this.navItems[0]);
@@ -36,24 +36,20 @@ class TabbedContentClass{
   }
 
   _addNavItemClickListeners(){
-    _.forEach(this.navItems, function(navItem){
-      /* eslint-disable max-len */
+    this.navItems.forEach((navItem)=>{
       navItem.addEventListener('click', this._navItemClick.bind(this, navItem), false);
-      /* eslint-enable */
-    }.bind(this));
+    });
   }
 
   _getNavItems(){
-    this.navItems = this.navContainer.getElementsByTagName('a');
+    this.navItems = Array.from(this.navContainer.getElementsByTagName('a'));
 
     this._setNavItemAriaControls();
     this._addNavItemClickListeners();
   }
 
   _getTabs(){
-    /* eslint-disable max-len */
-    this.tabs = this.config.element.querySelectorAll('.' + this.config.tabContainerClass);
-    /* eslint-enable */
+    this.tabs = Array.from(this.config.element.querySelectorAll(`.${this.config.tabContainerClass}`));
 
     this._setTabIds();
   }
@@ -65,7 +61,7 @@ class TabbedContentClass{
   }
 
   _setActiveTab(navItem){
-    let activeIndex = _.indexOf(this.navItems, navItem);
+    const activeIndex = _.indexOf(this.navItems, navItem);
 
     this._setNavItemAriaSelected(activeIndex);
     this._setNavItemClass(activeIndex);
@@ -76,11 +72,11 @@ class TabbedContentClass{
   _setNavItemAriaControls(){
     let href;
 
-    _.forEach(this.navItems, function(navItem, i){
+    this.navItems.forEach((navItem, i)=>{
       href = navItem.getAttribute('href');
 
       if (href === '#'){
-        navItem.setAttribute('aria-controls', 'tab-' + i);
+        navItem.setAttribute('aria-controls', `${this.config.element.id}-tab-${i}`);
       } else {
         navItem.setAttribute('aria-controls', href.substring(1));
       }
@@ -88,7 +84,7 @@ class TabbedContentClass{
   }
 
   _setNavItemAriaSelected(activeIndex){
-    _.forEach(this.navItems, (navItem)=>{
+    this.navItems.forEach((navItem)=>{
       navItem.setAttribute('aria-selected', 'false');
     });
 
@@ -96,8 +92,10 @@ class TabbedContentClass{
   }
 
   _setNavItemClass(activeIndex){
-    _.forEach(this.navItems, (navItem)=>{
-      let className = navItem.className;
+    let className;
+
+    this.navItems.forEach((navItem)=>{
+      className = navItem.className;
 
       navItem.className = className.replace(/(?:^|\s)active(?!\S)/g, '');
     });
@@ -106,16 +104,22 @@ class TabbedContentClass{
   }
 
   _setTabAriaHidden(activeIndex){
-    _.forEach(this.tabs, (tab)=>{
+    this.tabs.forEach((tab)=>{
       tab.setAttribute('aria-hidden', 'true');
     });
 
     this.tabs[activeIndex].setAttribute('aria-hidden', 'false');
   }
 
+  _setTabbedContentId(){
+    this.config.element.id = _.uniqueId('tabbed-content-');
+  }
+
   _setTabClass(activeIndex){
-    _.forEach(this.tabs, (tab)=>{
-      let className = tab.className;
+    let className;
+
+    this.tabs.forEach((tab)=>{
+      className = tab.className;
 
       tab.className = className.replace(/(?:^|\s)active(?!\S)/g, '');
     });
@@ -126,28 +130,30 @@ class TabbedContentClass{
   _setTabIds(){
     let href;
 
-    _.forEach(this.tabs, function(tabContentItem, i){
+    this.tabs.forEach((tab, i)=>{
       href = this.navItems[i].getAttribute('href');
 
       if (href === '#'){
         let ariaControls = this.navItems[i].getAttribute('aria-controls');
-        tabContentItem.id = ariaControls;
+        tab.id = ariaControls;
       }
-    }.bind(this));
+    });
   }
 
   _simulateNavItemClick(anchor){
     if (!_.isEmpty(anchor)){
-      _.forEach(this.navItems, function(navItem){
+      this.navItems.forEach((navItem)=>{
         let href = navItem.getAttribute('href');
 
         if (_.includes(href, anchor)){
           this._setActiveTab(navItem);
+
           window.location.hash = anchor;
         }
-      }.bind(this));
+      });
     }
   }
 }
 
 module.exports = TabbedContentClass;
+/* eslint-enable */

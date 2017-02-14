@@ -34,7 +34,6 @@ function createNavItemLink(navItem, i){
 
   if (i % 2 === 0){
     a.setAttribute('href', 'tab-' + (i - 1));
-
   } else {
     a.setAttribute('href', '#');
   }
@@ -118,8 +117,8 @@ describe('tabbed content module', function(){
 
     // For testing
     this.navContainer = tabbedContent.config.element.querySelector('.' + tabbedContent.config.navContainerClass);
-    this.navItems = tabbedContent.config.element.querySelector('.' + tabbedContent.config.navContainerClass).getElementsByTagName('a');
-    this.tabs = tabbedContent.config.element.querySelectorAll('.' + tabbedContent.config.tabContainerClass);
+    this.navItems = Array.from(tabbedContent.config.element.querySelector('.' + tabbedContent.config.navContainerClass).getElementsByTagName('a'));
+    this.tabs = Array.from(tabbedContent.config.element.querySelectorAll('.' + tabbedContent.config.tabContainerClass));
   });
 
   afterEach(()=>{
@@ -162,6 +161,7 @@ describe('tabbed content module', function(){
       tabbedContent.navItems = this.navItems;
       navItem = tabbedContent.navItems[0];
 
+      spyOn(tabbedContent, '_setTabbedContentId');
       spyOn(tabbedContent, '_getNavItems');
       spyOn(tabbedContent, '_getTabs');
       spyOn(tabbedContent, '_setActiveTab');
@@ -173,6 +173,10 @@ describe('tabbed content module', function(){
 
     it('should call the urlParser.getHash function', ()=>{
       expect(urlParser.getHash).toHaveBeenCalled();
+    });
+
+    it('should call the _setTabbedContentId function', ()=>{
+      expect(tabbedContent._setTabbedContentId).toHaveBeenCalled();
     });
 
     it('should call the _getNavItems function', ()=>{
@@ -300,13 +304,14 @@ describe('tabbed content module', function(){
 
     describe("when the nav item's href attribute is '#'", ()=>{
       beforeEach(()=>{
+        tabbedContent.config.element.id = 'tabbed-content-0';
         navItem = tabbedContent.navItems[0];
 
         tabbedContent._setNavItemAriaControls();
       });
 
-      it('should set the "aria-controls" attribute of the nav item to be "tab-[index]"', ()=>{
-        expect(navItem.getAttribute('aria-controls')).toEqual('tab-0');
+      it('should set the "aria-controls" attribute of the nav item to be "[this.config.element.id]-tab-[index]"', ()=>{
+        expect(navItem.getAttribute('aria-controls')).toEqual('tabbed-content-0-tab-0');
       });
     });
 
@@ -386,6 +391,16 @@ describe('tabbed content module', function(){
 
     it('should set the "aria-hidden" attribute of the tab with the same array index as the activeIndex parameter to "false"', ()=>{
       expect(tabOne.getAttribute('aria-hidden')).toEqual('false');
+    });
+  });
+
+  describe('_setTabbedContentId function', ()=>{
+    beforeEach(()=>{
+      tabbedContent._setTabbedContentId();
+    });
+
+    it('should set this.config.element.id to be "tabbed-content-" followed by a unique ID', ()=>{
+      expect(tabbedContent.config.element.id).toContain('tabbed-content-');
     });
   });
 
